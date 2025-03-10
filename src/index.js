@@ -52,8 +52,13 @@ const chineseCourse = {
   ]
 };
 
-// Generate the manifest file
+// Generate the manifest file and package
 const outputPath = 'output/chinese1C/imsmanifest.xml';
-generateManifest(chineseCourse, outputPath);
-
-console.log(`Generated Common Cartridge at ${outputPath}`); 
+generateManifest(chineseCourse, outputPath, true)
+  .then(() => {
+    console.log(`Generated Common Cartridge at ${outputPath}`);
+    console.log(`Packaged as ${outputPath.replace('imsmanifest.xml', '')}.imscc`);
+  })
+  .catch(err => {
+    console.error('Error generating cartridge:', err);
+  }); 

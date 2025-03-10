@@ -1,5 +1,6 @@
 const fs = require('fs');
 const path = require('path');
+const archiver = require('archiver');
 
 // Counter for generating sequential IDs
 let idCounter = 100;
@@ -17,12 +18,65 @@ function generateId(prefix = 'I_', suffix = '') {
 }
 
 /**
+ * Creates a zip file of the cartridge with .imscc extension
+ * @param {string} sourcePath - Path to the directory to be zipped
+ * @param {string} outputFilename - Path to the output zip file (without extension)
+ * @returns {Promise} - Promise that resolves when the zip is complete
+ */
+function createCartridgePackage(sourcePath, outputFilename) {
+  return new Promise((resolve, reject) => {
+    // Ensure the output directory exists
+    const outputDir = path.dirname(outputFilename);
+    if (!fs.existsSync(outputDir)) {
+      fs.mkdirSync(outputDir, { recursive: true });
+    }
+
+    // Create a file to stream archive data to
+    const output = fs.createWriteStream(`${outputFilename}.imscc`);
+    const archive = archiver('zip', {
+      zlib: { level: 9 } // Sets the compression level
+    });
+
+    // Listen for all archive data to be written
+    output.on('close', () => {
+      console.log(`Cartridge package created: ${outputFilename}.imscc`);
+      console.log(`Total bytes: ${archive.pointer()}`);
+      resolve();
+    });
+
+    // Good practice to catch warnings
+    archive.on('warning', (err) => {
+      if (err.code === 'ENOENT') {
+        console.warn(err);
+      } else {
+        reject(err);
+      }
+    });
+
+    // Good practice to catch this error explicitly
+    archive.on('error', (err) => {
+      reject(err);
+    });
+
+    // Pipe archive data to the file
+    archive.pipe(output);
+
+    // Append files from a directory
+    archive.directory(sourcePath, false);
+
+    // Finalize the archive (i.e., we are done appending files)
+    archive.finalize();
+  });
+}
+
+/**
  * Generates the IMS manifest XML from a JSON structure
  * @param {Object} courseData - Course structure in JSON format
  * @param {string} outputPath - Path to write the output file
- * @returns {string} - The generated XML content
+ * @param {boolean} createPackage - Whether to create a zip package
+ * @returns {Promise<string>} - The generated XML content
  */
-function generateManifest(courseData, outputPath) {
+function generateManifest(courseData, outputPath, createPackage = true) {
   // Reset ID counter for each manifest generation
   idCounter = 100;
   
@@ -170,7 +224,18 @@ function generateManifest(courseData, outputPath) {
     fs.writeFileSync(outputPath, xml);
   }
   
-  return xml;
+  // Create a zip package if requested
+  if (createPackage && outputPath) {
+    const cartridgeDir = path.dirname(outputPath);
+    const zipOutputBase = path.join(
+      path.dirname(cartridgeDir),
+      path.basename(cartridgeDir)
+    );
+    return createCartridgePackage(cartridgeDir, zipOutputBase)
+      .then(() => xml);
+  }
+  
+  return Promise.resolve(xml);
 }
 
 module.exports = {
