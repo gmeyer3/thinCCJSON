@@ -29,28 +29,28 @@
         <item identifier="I_103" identifierref="I_103_R">
           <title>eTeacher Guide</title>
         </item>
-        <item identifier="I_105" identifierref="I_105_R">
+        <item identifier="I_104" identifierref="I_104_R">
           <title>Course Information</title>
         </item>
-        <item identifier="I_107" identifierref="I_107_R">
+        <item identifier="I_105" identifierref="I_105_R">
           <title>Lessons</title>
         </item>
         </item>
-        <item identifier="I_109">
+        <item identifier="I_106">
           <title>Getting Started</title>
-        <item identifier="I_110" identifierref="I_110_R">
+        <item identifier="I_107" identifierref="I_107_R">
           <title>00.01 Things to Know</title>
         </item>
         </item>
-        <item identifier="I_112">
+        <item identifier="I_108">
           <title>Module 01: My Life</title>
-        <item identifier="I_113" identifierref="I_113_R">
+        <item identifier="I_109" identifierref="I_109_R">
           <title>01.00 My Life Pretest</title>
         </item>
-        <item identifier="I_115" identifierref="I_115_R">
+        <item identifier="I_110" identifierref="I_110_R">
           <title>01.01 Greetings and Introductions</title>
         </item>
-        <item identifier="I_117" identifierref="I_117_R">
+        <item identifier="I_111" identifierref="I_111_R">
           <title>01.02 Call Me Maybe</title>
         </item>
         </item>
@@ -59,25 +59,25 @@
     </organizations>
     <resources>
         <resource identifier="I_103_R" type="imsbasiclti_xmlv1p0">
+            <file href="i_103/basiclti.xml"/>
+        </resource>
+        <resource identifier="I_104_R" type="imsbasiclti_xmlv1p0">
             <file href="i_104/basiclti.xml"/>
         </resource>
         <resource identifier="I_105_R" type="imsbasiclti_xmlv1p0">
-            <file href="i_106/basiclti.xml"/>
+            <file href="i_105/basiclti.xml"/>
         </resource>
         <resource identifier="I_107_R" type="imsbasiclti_xmlv1p0">
-            <file href="i_108/basiclti.xml"/>
+            <file href="i_107/basiclti.xml"/>
+        </resource>
+        <resource identifier="I_109_R" type="imsbasiclti_xmlv1p0">
+            <file href="i_109/basiclti.xml"/>
         </resource>
         <resource identifier="I_110_R" type="imsbasiclti_xmlv1p0">
+            <file href="i_110/basiclti.xml"/>
+        </resource>
+        <resource identifier="I_111_R" type="imsbasiclti_xmlv1p0">
             <file href="i_111/basiclti.xml"/>
-        </resource>
-        <resource identifier="I_113_R" type="imsbasiclti_xmlv1p0">
-            <file href="i_114/basiclti.xml"/>
-        </resource>
-        <resource identifier="I_115_R" type="imsbasiclti_xmlv1p0">
-            <file href="i_116/basiclti.xml"/>
-        </resource>
-        <resource identifier="I_117_R" type="imsbasiclti_xmlv1p0">
-            <file href="i_118/basiclti.xml"/>
         </resource>
     </resources>
 </manifest>

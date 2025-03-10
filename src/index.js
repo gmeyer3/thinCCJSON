@@ -53,7 +53,7 @@ const chineseCourse = {
 };
 
 // Generate the manifest file
-const outputPath = 'output/chinese1/imsmanifest.xml';
+const outputPath = 'output/chinese1C/imsmanifest.xml';
 generateManifest(chineseCourse, outputPath);
 
 console.log(`Generated Common Cartridge at ${outputPath}`); 

@@ -1,6 +1,8 @@
 const fs = require('fs');
 const path = require('path');
-const uuid = require('uuid');
+
+// Counter for generating sequential IDs
+let idCounter = 100;
 
 /**
  * Generates a unique identifier with the specified prefix and optional suffix
@@ -9,9 +11,9 @@ const uuid = require('uuid');
  * @returns {string} - The generated identifier
  */
 function generateId(prefix = 'I_', suffix = '') {
-  // Generate a random alphanumeric string (6-8 chars)
-  const randomId = uuid.v4().replace(/-/g, '').substring(0, 8).toUpperCase();
-  return `${prefix}${randomId}${suffix}`;
+  // Get the next ID and increment the counter
+  const nextId = idCounter++;
+  return `${prefix}${nextId}${suffix}`;
 }
 
 /**
@@ -21,6 +23,9 @@ function generateId(prefix = 'I_', suffix = '') {
  * @returns {string} - The generated XML content
  */
 function generateManifest(courseData, outputPath) {
+  // Reset ID counter for each manifest generation
+  idCounter = 100;
+  
   const manifestId = generateId('M_', '');
   const organizationId = generateId('O_', '');
   
@@ -38,7 +43,9 @@ function generateManifest(courseData, outputPath) {
       if (item.launchUrl) {
         // This is a leaf item with a launch URL
         const resourceId = `${itemId}_R`;
-        const folderName = generateId('i_', '').toLowerCase();
+        // Extract the numeric part from the itemId to use in folder name
+        const idNumber = itemId.replace('I_', '');
+        const folderName = `i_${idNumber}`.toLowerCase();
         
         // Add to resources list
         resources.push({
