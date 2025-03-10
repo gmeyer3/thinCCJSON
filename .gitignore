@@ -1,3 +1,14 @@
+# Dependencies
+node_modules/
+package-lock.json
+
+# Build outputs
+output/
+
+# IDE files
+.vscode/
+.idea/
+
 # Logs
 logs
 *.log
@@ -7,8 +18,6 @@ yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
 
-#ignore output folder
-output/
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
@@ -42,7 +51,6 @@ bower_components
 build/Release
 
 # Dependency directories
-node_modules/
 jspm_packages/
 
 # Snowpack dependency directory (https://snowpack.dev/)
@@ -131,3 +139,7 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# OS specific files
+.DS_Store
+Thumbs.db
