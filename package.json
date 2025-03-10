@@ -1,16 +1,13 @@
 {
-  "name": "thinccjson",
+  "name": "ims-cartridge-generator",
   "version": "1.0.0",
-  "description": "",
+  "description": "Generate IMS Thin Common Cartridge XML files",
   "main": "index.js",
-  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "start": "node src/index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "author": "gmeyer",
-  "license": "ISC",
   "dependencies": {
-    "xml-js": "^1.6.11"
+    "uuid": "^9.0.0"
   }
 }
