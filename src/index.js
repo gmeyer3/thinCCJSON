@@ -117,7 +117,7 @@ const chineseCourse = {
 };
 
 // Generate the manifest file and package
-const outputPath = 'output/chinese1E/imsmanifest.xml';
+const outputPath = 'output/chinese1F/imsmanifest.xml';
 generateManifest(chineseCourse, outputPath, true)
   .then(() => {
     console.log(`Generated Common Cartridge at ${outputPath}`);

@@ -91,11 +91,10 @@ function generateManifest(courseData, outputPath, createPackage = true) {
     let itemsXml = '';
     
     items.forEach(item => {
-      const itemId = generateId();
-      let itemXml = '';
-      
+      // First, handle the content item
       if (item.launchUrl) {
-        // This is a leaf item with a launch URL
+        // Generate ID for the content item
+        const itemId = generateId();
         const contentResourceId = `${itemId}_R`;
         // Extract the numeric part from the itemId to use in folder name
         const idNumber = itemId.replace('I_', '');
@@ -110,54 +109,50 @@ function generateManifest(courseData, outputPath, createPackage = true) {
           isAssessment: false
         });
         
-        // If there's also an assessment URL, create a separate resource for it
-        let assessmentResourceId = null;
+        // Create the content resource item
+        itemsXml += `
+        <item identifier="${itemId}" identifierref="${contentResourceId}">
+          <title>${item.title}</title>
+        </item>`;
+        
+        // Now, create a separate item for assessment if it exists
         if (item.assessmentUrl) {
-          // Create a separate resource for the assessment using LTI Advantage
-          assessmentResourceId = `${itemId}_A_R`;
-          const assessmentIdNumber = parseInt(idNumber) + 1000; // Make it distinct
+          // Generate a new ID for the assessment item
+          const assessmentItemId = generateId();
+          const assessmentResourceId = `${assessmentItemId}_R`;
+          const assessmentIdNumber = assessmentItemId.replace('I_', '');
           const assessmentFolderName = `i_${assessmentIdNumber}`.toLowerCase();
           
+          // Get the assessment title
+          const assessmentTitle = item.assessmentTitle || 
+                                `${item.title} ${item.assessmentMetadata?.type === 'exam' ? 'Exam' : 'Quiz'}`;
+          
+          // Add to resources list for assessment
           resources.push({
             id: assessmentResourceId,
             folderName: assessmentFolderName,
             launchUrl: item.assessmentUrl,
-            title: item.assessmentTitle || `${item.title} Assessment`,
+            title: assessmentTitle,
             isAssessment: true,
             metadata: item.assessmentMetadata || {}
           });
-        }
-        
-        // Create the content resource item
-        itemXml = `
-        <item identifier="${itemId}" identifierref="${contentResourceId}">
-          <title>${item.title}</title>`;
-        
-        // If there's an assessment, add it as a child item with a clearer name
-        if (assessmentResourceId) {
-          const assessmentItemId = generateId();
-          const assessmentTitle = item.assessmentTitle || 
-                                 `${item.title} ${item.assessmentMetadata?.type === 'exam' ? 'Exam' : 'Quiz'}`;
           
-          itemXml += `
-          <item identifier="${assessmentItemId}" identifierref="${assessmentResourceId}">
-            <title>${assessmentTitle}</title>
-          </item>`;
-        }
-        
-        itemXml += `
+          // Create the assessment item immediately after the content item
+          itemsXml += `
+        <item identifier="${assessmentItemId}" identifierref="${assessmentResourceId}">
+          <title>${assessmentTitle}</title>
         </item>`;
+        }
       } else {
         // This is a container item with children
+        const itemId = generateId();
         const childrenXml = item.children ? generateItems(item.children) : '';
         
-        itemXml = `
+        itemsXml += `
         <item identifier="${itemId}">
           <title>${item.title}</title>${childrenXml}
         </item>`;
       }
-      
-      itemsXml += itemXml;
     });
     
     return itemsXml;
