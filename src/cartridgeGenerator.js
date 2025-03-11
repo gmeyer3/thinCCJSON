@@ -122,23 +122,26 @@ function generateManifest(courseData, outputPath, createPackage = true) {
             id: assessmentResourceId,
             folderName: assessmentFolderName,
             launchUrl: item.assessmentUrl,
-            title: `${item.title} Assessment`,
+            title: item.assessmentTitle || `${item.title} Assessment`,
             isAssessment: true,
             metadata: item.assessmentMetadata || {}
           });
         }
         
-        // Only add the content resource reference to the item
+        // Create the content resource item
         itemXml = `
         <item identifier="${itemId}" identifierref="${contentResourceId}">
           <title>${item.title}</title>`;
         
-        // If there's an assessment, add it as a child item
+        // If there's an assessment, add it as a child item with a clearer name
         if (assessmentResourceId) {
           const assessmentItemId = generateId();
+          const assessmentTitle = item.assessmentTitle || 
+                                 `${item.title} ${item.assessmentMetadata?.type === 'exam' ? 'Exam' : 'Quiz'}`;
+          
           itemXml += `
           <item identifier="${assessmentItemId}" identifierref="${assessmentResourceId}">
-            <title>${item.title} Assessment</title>
+            <title>${assessmentTitle}</title>
           </item>`;
         }
         
