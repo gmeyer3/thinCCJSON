@@ -96,21 +96,53 @@ function generateManifest(courseData, outputPath, createPackage = true) {
       
       if (item.launchUrl) {
         // This is a leaf item with a launch URL
-        const resourceId = `${itemId}_R`;
+        const contentResourceId = `${itemId}_R`;
         // Extract the numeric part from the itemId to use in folder name
         const idNumber = itemId.replace('I_', '');
-        const folderName = `i_${idNumber}`.toLowerCase();
+        const contentFolderName = `i_${idNumber}`.toLowerCase();
         
-        // Add to resources list
+        // Add to resources list for content
         resources.push({
-          id: resourceId,
-          folderName: folderName,
-          launchUrl: item.launchUrl
+          id: contentResourceId,
+          folderName: contentFolderName,
+          launchUrl: item.launchUrl,
+          title: item.title,
+          isAssessment: false
         });
         
+        // If there's also an assessment URL, create a separate resource for it
+        let assessmentResourceId = null;
+        if (item.assessmentUrl) {
+          // Create a separate resource for the assessment using LTI Advantage
+          assessmentResourceId = `${itemId}_A_R`;
+          const assessmentIdNumber = parseInt(idNumber) + 1000; // Make it distinct
+          const assessmentFolderName = `i_${assessmentIdNumber}`.toLowerCase();
+          
+          resources.push({
+            id: assessmentResourceId,
+            folderName: assessmentFolderName,
+            launchUrl: item.assessmentUrl,
+            title: `${item.title} Assessment`,
+            isAssessment: true,
+            metadata: item.assessmentMetadata || {}
+          });
+        }
+        
+        // Only add the content resource reference to the item
         itemXml = `
-        <item identifier="${itemId}" identifierref="${resourceId}">
-          <title>${item.title}</title>
+        <item identifier="${itemId}" identifierref="${contentResourceId}">
+          <title>${item.title}</title>`;
+        
+        // If there's an assessment, add it as a child item
+        if (assessmentResourceId) {
+          const assessmentItemId = generateId();
+          itemXml += `
+          <item identifier="${assessmentItemId}" identifierref="${assessmentResourceId}">
+            <title>${item.title} Assessment</title>
+          </item>`;
+        }
+        
+        itemXml += `
         </item>`;
       } else {
         // This is a container item with children
@@ -133,29 +165,55 @@ function generateManifest(courseData, outputPath, createPackage = true) {
     let resourcesXml = '';
     
     resources.forEach(resource => {
-      resourcesXml += `
-        <resource identifier="${resource.id}" type="imsbasiclti_xmlv1p0">
-            <file href="${resource.folderName}/basiclti.xml"/>
-        </resource>`;
-      
-      // Create the folder and basiclti.xml file
-      if (outputPath) {
-        const folderPath = path.join(path.dirname(outputPath), resource.folderName);
-        if (!fs.existsSync(folderPath)) {
-          fs.mkdirSync(folderPath, { recursive: true });
-        }
+      // For content resources (basic LTI)
+      if (!resource.isAssessment) {
+        resourcesXml += `
+          <resource identifier="${resource.id}" type="imsbasiclti_xmlv1p0">
+              <file href="${resource.folderName}/basiclti.xml"/>
+          </resource>`;
         
-        // Generate the basiclti.xml content
-        const basicLtiXml = generateBasicLtiXml(resource.launchUrl);
-        fs.writeFileSync(path.join(folderPath, 'basiclti.xml'), basicLtiXml);
+        // Create the folder and basic LTI XML file
+        if (outputPath) {
+          const folderPath = path.join(path.dirname(outputPath), resource.folderName);
+          if (!fs.existsSync(folderPath)) {
+            fs.mkdirSync(folderPath, { recursive: true });
+          }
+          
+          // Generate the basiclti.xml content for regular content
+          const basicLtiXml = generateBasicLtiXml(resource.launchUrl, resource.title);
+          fs.writeFileSync(path.join(folderPath, 'basiclti.xml'), basicLtiXml);
+        }
+      } 
+      // For assessment resources (LTI Advantage)
+      else {
+        resourcesXml += `
+          <resource identifier="${resource.id}" type="imsbasiclti_xmlv1p0">
+              <file href="${resource.folderName}/lti_advantage.xml"/>
+          </resource>`;
+        
+        // Create the folder and LTI Advantage XML file
+        if (outputPath) {
+          const folderPath = path.join(path.dirname(outputPath), resource.folderName);
+          if (!fs.existsSync(folderPath)) {
+            fs.mkdirSync(folderPath, { recursive: true });
+          }
+          
+          // Generate the LTI Advantage XML content for assessments
+          const ltiAdvantageXml = generateLtiAdvantageXml(
+            resource.launchUrl, 
+            resource.title, 
+            resource.metadata
+          );
+          fs.writeFileSync(path.join(folderPath, 'lti_advantage.xml'), ltiAdvantageXml);
+        }
       }
     });
     
     return resourcesXml;
   }
   
-  // Generate basiclti.xml content
-  function generateBasicLtiXml(launchUrl) {
+  // Generate basiclti.xml content (LTI 1.0/1.1)
+  function generateBasicLtiXml(launchUrl, title) {
     return `<?xml version="1.0" encoding="UTF-8"?>
 <cartridge_basiclti_link xmlns="http://www.imsglobal.org/xsd/imslticc_v1p0"
     xmlns:blti="http://www.imsglobal.org/xsd/imsbasiclti_v1p0"
@@ -166,8 +224,8 @@ function generateManifest(courseData, outputPath, createPackage = true) {
     http://www.imsglobal.org/xsd/imsbasiclti_v1p0 http://www.imsglobal.org/xsd/lti/ltiv1p0/imsbasiclti_v1p0.xsd
     http://www.imsglobal.org/xsd/imslticm_v1p0 http://www.imsglobal.org/xsd/lti/ltiv1p0/imslticm_v1p0.xsd
     http://www.imsglobal.org/xsd/imslticp_v1p0 http://www.imsglobal.org/xsd/lti/ltiv1p0/imslticp_v1p0.xsd">
-    <blti:title>External Tool</blti:title>
-    <blti:description>Launch URL</blti:description>
+    <blti:title>${title || 'External Tool'}</blti:title>
+    <blti:description>Basic LTI Launch</blti:description>
     <blti:launch_url>${launchUrl}</blti:launch_url>
     <blti:secure_launch_url>${launchUrl.replace('http://', 'https://')}</blti:secure_launch_url>
     <blti:vendor>
@@ -177,6 +235,69 @@ function generateManifest(courseData, outputPath, createPackage = true) {
     <cartridge_bundle identifierref="BLTI001_Bundle"/>
     <cartridge_icon identifierref="BLTI001_Icon"/>
 </cartridge_basiclti_link>`;
+  }
+  
+  // Generate LTI Advantage XML content (LTI 1.3)
+  function generateLtiAdvantageXml(launchUrl, title, metadata = {}) {
+    // Base XML structure
+    let xml = `<?xml version="1.0" encoding="UTF-8"?>
+<cartridge_basiclti_link xmlns="http://www.imsglobal.org/xsd/imslticc_v1p0"
+    xmlns:blti="http://www.imsglobal.org/xsd/imsbasiclti_v1p0"
+    xmlns:lticm="http://www.imsglobal.org/xsd/imslticm_v1p0"
+    xmlns:lticp="http://www.imsglobal.org/xsd/imslticp_v1p0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:schemaLocation="http://www.imsglobal.org/xsd/imslticc_v1p0 http://www.imsglobal.org/xsd/lti/ltiv1p0/imslticc_v1p0.xsd
+    http://www.imsglobal.org/xsd/imsbasiclti_v1p0 http://www.imsglobal.org/xsd/lti/ltiv1p0/imsbasiclti_v1p0.xsd
+    http://www.imsglobal.org/xsd/imslticm_v1p0 http://www.imsglobal.org/xsd/lti/ltiv1p0/imslticm_v1p0.xsd
+    http://www.imsglobal.org/xsd/imslticp_v1p0 http://www.imsglobal.org/xsd/lti/ltiv1p0/imslticp_v1p0.xsd">
+    <blti:title>${title || 'Assessment'}</blti:title>
+    <blti:description>Assessment Launch via LTI Advantage</blti:description>
+    <blti:launch_url>${launchUrl}</blti:launch_url>
+    <blti:secure_launch_url>${launchUrl.replace('http://', 'https://')}</blti:secure_launch_url>
+    <blti:vendor>
+        <lticp:code>external_tool</lticp:code>
+        <lticp:name>External Tool Provider</lticp:name>
+    </blti:vendor>
+    <blti:extensions platform="canvas.instructure.com">
+        <lticm:property name="tool_id">lti_advantage_tool</lticm:property>
+        <lticm:property name="privacy_level">public</lticm:property>
+        <lticm:property name="lti_1_3_enabled">true</lticm:property>
+        <lticm:property name="public_jwk_url">${launchUrl.replace(/\/[^\/]*$/, '/jwks')}</lticm:property>
+        <lticm:property name="assignment_enabled">true</lticm:property>
+        <lticm:property name="assignment_points_possible">${metadata.points || 10}</lticm:property>`;
+    
+    // Add specific assessment properties from metadata
+    if (metadata.timeLimit) {
+      xml += `
+        <lticm:property name="time_limit">${metadata.timeLimit}</lticm:property>`;
+    }
+    
+    if (metadata.attempts) {
+      xml += `
+        <lticm:property name="allowed_attempts">${metadata.attempts}</lticm:property>`;
+    }
+    
+    if (metadata.proctored) {
+      xml += `
+        <lticm:property name="proctoring_enabled">true</lticm:property>`;
+    }
+    
+    if (metadata.passingScore) {
+      xml += `
+        <lticm:property name="passing_score">${metadata.passingScore}</lticm:property>`;
+    }
+    
+    // Complete the XML
+    xml += `
+        <lticm:property name="settings">
+            <lticm:property name="oidc_initiation_url">${launchUrl.replace(/\/[^\/]*$/, '/init')}</lticm:property>
+        </lticm:property>
+    </blti:extensions>
+    <cartridge_bundle identifierref="BLTI001_Bundle"/>
+    <cartridge_icon identifierref="BLTI001_Icon"/>
+</cartridge_basiclti_link>`;
+
+    return xml;
   }
   
   // Generate the full XML
